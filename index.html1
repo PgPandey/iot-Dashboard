@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SolarCare Pro Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+
+:root{
+  --primary:#0077ff;
+  --primary-light:#eaf4ff;
+  --accent:#00c6ff;
+  --success:#1abc9c;
+  --warning:#f4b400;
+  --danger:#ff4d6d;
+  --bg-gradient:linear-gradient(135deg,#eef7ff,#d9ecff);
+  --glass:rgba(255,255,255,0.75);
+  --border:rgba(0,119,255,0.15);
+  --shadow:0 10px 30px rgba(0,119,255,0.15);
+  --text-dark:#1c2b3a;
+  --text-light:#6b7f94;
+  --radius:18px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg-gradient);
+  color:var(--text-dark);
+  min-height:100vh;
+  display:flex;
+}
+
+/* Sidebar */
+.sidebar{
+  width:260px;
+  background:white;
+  box-shadow:var(--shadow);
+  padding:30px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:30px;
+}
+
+.brand{
+  font-weight:700;
+  font-size:22px;
+  color:var(--primary);
+}
+
+.nav-item{
+  padding:12px 14px;
+  border-radius:12px;
+  cursor:pointer;
+  transition:0.3s;
+  color:var(--text-light);
+  font-weight:500;
+}
+
+.nav-item:hover,
+.nav-item.active{
+  background:var(--primary-light);
+  color:var(--primary);
+}
+
+/* Main */
+.main{
+  flex:1;
+  padding:30px;
+  display:flex;
+  flex-direction:column;
+  gap:25px;
+}
+
+/* Topbar */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.status{
+  background:var(--success);
+  color:white;
+  padding:8px 16px;
+  border-radius:30px;
+  font-size:14px;
+}
+
+/* KPI Grid */
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:20px;
+}
+
+.kpi-card{
+  background:var(--glass);
+  backdrop-filter:blur(20px);
+  padding:25px;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  border:1px solid var(--border);
+  transition:0.3s;
+}
+
+.kpi-card:hover{
+  transform:translateY(-5px);
+}
+
+.kpi-title{
+  font-size:14px;
+  color:var(--text-light);
+  margin-bottom:10px;
+}
+
+.kpi-value{
+  font-size:26px;
+  font-weight:700;
+  color:var(--primary);
+}
+
+/* Charts */
+.chart-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:25px;
+}
+
+.chart-card{
+  background:var(--glass);
+  backdrop-filter:blur(20px);
+  border-radius:var(--radius);
+  padding:25px;
+  box-shadow:var(--shadow);
+  border:1px solid var(--border);
+  height:350px;
+}
+
+.chart-card h3{
+  font-size:14px;
+  margin-bottom:15px;
+  color:var(--text-light);
+}
+
+/* Responsive */
+@media(max-width:1000px){
+  .chart-grid{grid-template-columns:1fr}
+  .sidebar{display:none}
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="brand">SolarCare Pro</div>
+  <div class="nav-item active">Dashboard</div>
+  <div class="nav-item">Analytics</div>
+  <div class="nav-item">Reports</div>
+  <div class="nav-item">Maintenance</div>
+  <div class="nav-item">Settings</div>
+</div>
+
+<div class="main">
+
+  <div class="topbar">
+    <h2>Solar Panel Performance Monitor</h2>
+    <div class="status">LIVE</div>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-title">Voltage</div><div class="kpi-value" id="voltage">-- V</div></div>
+    <div class="kpi-card"><div class="kpi-title">Current</div><div class="kpi-value" id="current">-- A</div></div>
+    <div class="kpi-card"><div class="kpi-title">Energy Output</div><div class="kpi-value" id="energy">-- W</div></div>
+    <div class="kpi-card"><div class="kpi-title">Efficiency</div><div class="kpi-value" id="efficiency">-- %</div></div>
+    <div class="kpi-card"><div class="kpi-title">Temperature</div><div class="kpi-value" id="temperature">-- °C</div></div>
+    <div class="kpi-card"><div class="kpi-title">Humidity</div><div class="kpi-value" id="humidity">-- %</div></div>
+  </div>
+
+  <!-- Charts -->
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>Voltage & Current</h3>
+      <canvas id="vcChart"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>Energy Output</h3>
+      <canvas id="energyChart"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>Temperature & Humidity</h3>
+      <canvas id="envChart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+const vcChart=new Chart(document.getElementById("vcChart"),{
+  type:"line",
+  data:{labels:[],datasets:[
+    {label:"Voltage",data:[],borderColor:"#0077ff",tension:.4},
+    {label:"Current",data:[],borderColor:"#00c6ff",tension:.4}
+  ]}
+});
+
+const energyChart=new Chart(document.getElementById("energyChart"),{
+  type:"line",
+  data:{labels:[],datasets:[
+    {label:"Energy",data:[],borderColor:"#1abc9c",tension:.4}
+  ]}
+});
+
+const envChart=new Chart(document.getElementById("envChart"),{
+  type:"line",
+  data:{labels:[],datasets:[
+    {label:"Temperature (°C)",data:[],borderColor:"#ff4d6d",tension:.4},
+    {label:"Humidity (%)",data:[],borderColor:"#4da3ff",tension:.4}
+  ]}
+});
+
+function updateData(){
+  const time=new Date().toLocaleTimeString();
+
+  const voltage=(220+Math.random()*10).toFixed(1);
+  const current=(5+Math.random()*2).toFixed(1);
+  const energy=(1000+Math.random()*200).toFixed(0);
+  const efficiency=(80+Math.random()*10).toFixed(1);
+  const temperature=(25+Math.random()*10).toFixed(1);
+  const humidity=(50+Math.random()*20).toFixed(1);
+
+  document.getElementById("voltage").innerText=voltage+" V";
+  document.getElementById("current").innerText=current+" A";
+  document.getElementById("energy").innerText=energy+" W";
+  document.getElementById("efficiency").innerText=efficiency+" %";
+  document.getElementById("temperature").innerText=temperature+" °C";
+  document.getElementById("humidity").innerText=humidity+" %";
+
+  if(vcChart.data.labels.length>20){
+    vcChart.data.labels.shift();
+    vcChart.data.datasets.forEach(d=>d.data.shift());
+    energyChart.data.labels.shift();
+    energyChart.data.datasets[0].data.shift();
+    envChart.data.labels.shift();
+    envChart.data.datasets.forEach(d=>d.data.shift());
+  }
+
+  vcChart.data.labels.push(time);
+  vcChart.data.datasets[0].data.push(voltage);
+  vcChart.data.datasets[1].data.push(current);
+
+  energyChart.data.labels.push(time);
+  energyChart.data.datasets[0].data.push(energy);
+
+  envChart.data.labels.push(time);
+  envChart.data.datasets[0].data.push(temperature);
+  envChart.data.datasets[1].data.push(humidity);
+
+  vcChart.update();
+  energyChart.update();
+  envChart.update();
+}
+
+setInterval(updateData,2000);
+
+</script>
+
+</body>
+</html>
