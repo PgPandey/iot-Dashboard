@@ -26,3 +26,7 @@ The data is sent to the IoT dashboard where it is displayed in real time.
 - Mobile app integration
 - Fault detection alerts
 - Cloud data storage
+## Dashboard Preview
+
+![Dashboard](Screenshot 2026-03-08 124205.png)
+- 
